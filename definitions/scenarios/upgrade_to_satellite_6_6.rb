@@ -78,5 +78,3 @@ module Scenarios::Satellite_6_6
     end
   end
 end
-
-ForemanMaintain::UpgradeRunner.register_version('6.6', :upgrade_to_satellite_6_6)

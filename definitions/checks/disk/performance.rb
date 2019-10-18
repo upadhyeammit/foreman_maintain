@@ -1,9 +1,13 @@
 module Checks
   module Disk
     class Performance < ForemanMaintain::Check
+      DEFAULT_DIRS = [
+        '/var/lib/pulp', '/var/lib/mongodb', '/var/lib/pgsql'
+      ].select { |file_path| File.directory?(file_path) }.freeze
+
       metadata do
         label :disk_performance
-        description 'Check for recommended disk speed of pulp, mongodb, pgsql dir.'
+        description "Check recommended disk speed for #{DEFAULT_DIRS.join(',')} directories."
         tags :pre_upgrade
         preparation_steps { Procedures::Packages::Install.new(:packages => %w[fio]) }
 
@@ -14,9 +18,6 @@ module Checks
 
       EXPECTED_IO = 60
       DEFAULT_UNIT = 'MB/sec'.freeze
-      DEFAULT_DIRS = [
-        '/var/lib/pulp', '/var/lib/mongodb', '/var/lib/pgsql'
-      ].select { |file_path| File.directory?(file_path) }.freeze
 
       attr_reader :stats
 
@@ -29,7 +30,7 @@ module Checks
           puts stats.stdout
 
           current_downstream_feature = feature(:instance).downstream
-          if current_downstream_feature && current_downstream_feature.at_least_version?('6.3')
+          if current_downstream_feature&.at_least_version?('6.3')
             assert(success, io_obj.slow_disk_error_msg + warning_message, :warn => true)
           else
             assert(success, io_obj.slow_disk_error_msg)
